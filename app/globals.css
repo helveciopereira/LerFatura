@@ -1,0 +1,196 @@
+/**
+ * globals.css - Sistema de design global do LerFatura
+ * 
+ * Design system com tema escuro premium, paleta de cores harmoniosa,
+ * tipografia moderna, animações suaves e scrollbar personalizada.
+ * 
+ * Versão: 1.0.0
+ */
+
+@import "tailwindcss";
+
+/* === TOKENS DE DESIGN (Variáveis do Tema) === */
+@theme {
+  /* --- Cores de Superfície (fundo) --- */
+  --color-surface: #0a0c10;
+  --color-surface-container: #12151c;
+  --color-surface-container-high: #1a1e28;
+  --color-surface-container-highest: #232836;
+
+  /* --- Cores Primárias e de Destaque --- */
+  --color-primary: #10b77f;
+  --color-primary-hover: #0ed990;
+  --color-secondary: #3b82f6;
+  --color-tertiary: #f97a77;
+  --color-quaternary: #a78bfa;
+
+  /* --- Cores de Contorno e Borda --- */
+  --color-outline: #6b7a8d;
+  --color-outline-variant: #242a38;
+
+  /* --- Cores de Estado --- */
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #10b981;
+
+  /* --- Cores de Texto --- */
+  --color-on-surface: #e2e8f0;
+  --color-on-surface-variant: #94a3b8;
+  --color-on-primary: #002113;
+
+  /* --- Tipografia --- */
+  --font-nav-title: var(--font-space-grotesk), sans-serif;
+  --font-data-mono: var(--font-space-grotesk), monospace;
+  --font-body-main: var(--font-inter), sans-serif;
+
+  /* --- Espaçamentos --- */
+  --spacing-row-height: 52px;
+  --spacing-nav-height: 60px;
+  --spacing-edge-margin: 16px;
+  --spacing-inner-gap: 10px;
+}
+
+/* === ESTILOS BASE DO BODY === */
+body {
+  @apply bg-surface text-on-surface font-body-main antialiased selection:bg-primary/30;
+}
+
+/* === SCROLLBAR PERSONALIZADA === */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* === ANIMAÇÕES === */
+
+/* Entrada com fade e slide para cima */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Entrada com fade simples */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Efeito de pulso suave */
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Barra de progresso animada */
+@keyframes progressGrow {
+  from { width: 0; }
+}
+
+/* Rotação para loading spinner */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Shimmer para estado de loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* === CLASSES DE ANIMAÇÃO === */
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.4s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-pulse-subtle {
+  animation: subtlePulse 2s ease-in-out infinite;
+}
+
+.animate-progress-grow {
+  animation: progressGrow 0.8s ease-out forwards;
+}
+
+.animate-spin-slow {
+  animation: spin 1.2s linear infinite;
+}
+
+/* Estado de loading com shimmer */
+.shimmer-loading {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-container) 25%,
+    var(--color-surface-container-high) 50%,
+    var(--color-surface-container) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* === TRANSIÇÕES DE LINHA DA TABELA === */
+.expense-row {
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.expense-row:hover {
+  transform: translateX(2px);
+}
+
+/* === BOTÕES DE CATEGORIA (H, A, E, T) === */
+.category-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.category-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+}
+
+.category-btn:hover::after {
+  opacity: 1;
+}
+
+.category-btn:active {
+  transform: scale(0.9);
+}
+
+/* === MODAL OVERLAY === */
+.modal-overlay {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* === RESPONSIVIDADE === */
+@media (max-width: 640px) {
+  :root {
+    --spacing-edge-margin: 10px;
+    --spacing-row-height: 48px;
+    --spacing-nav-height: 52px;
+  }
+}
