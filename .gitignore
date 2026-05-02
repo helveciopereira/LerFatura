@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# PDFs de fatura (dados pessoais)
+*.pdf
+Fatura_*.pdf
+
+# Scripts de debug temporários
+scripts/debug_*.mjs
+scripts/find_*.mjs
