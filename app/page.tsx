@@ -7,8 +7,8 @@
  */
 
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { FileUp, Terminal, Info, Trash2, BarChart3, Upload, Loader2, Sparkles, X } from 'lucide-react';
-import { parseCreditCardPdf, extractPdfRawText, Expense, ExpenseCategory } from '@/lib/pdfUtils';
+import { FileUp, Terminal, Info, Trash2, BarChart3, Upload, Loader2, X } from 'lucide-react';
+import { parseCreditCardPdf, Expense, ExpenseCategory } from '@/lib/pdfUtils';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -42,7 +42,6 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showLegend, setShowLegend] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [useGemini, setUseGemini] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // === CARREGAR DO LOCALSTORAGE ===
@@ -79,42 +78,13 @@ export default function Home() {
     setErrorMsg(null);
     let extractedExpenses: Expense[] = [];
 
-    // Tentar Gemini primeiro (se habilitado)
-    if (useGemini) {
-      try {
-        setProcessingMsg('Extraindo texto do PDF...');
-        const rawText = await extractPdfRawText(file);
-
-        setProcessingMsg('Processando com IA Gemini...');
-        const res = await fetch('/api/parse-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pdfText: rawText }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.expenses?.length > 0) {
-            extractedExpenses = data.expenses;
-            console.log(`[Gemini] ${extractedExpenses.length} despesas extraídas`);
-          }
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          console.warn('[Gemini] Falha:', errData.error || res.statusText);
-        }
-      } catch (err: any) {
-        console.warn('[Gemini] Erro, usando fallback local:', err.message);
-      }
-    }
-
-    // Fallback: parser local se Gemini falhou ou está desabilitado
-    if (extractedExpenses.length === 0) {
-      try {
-        setProcessingMsg('Processando PDF localmente...');
-        extractedExpenses = await parseCreditCardPdf(file);
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Erro ao processar PDF.');
-      }
+    // Processar PDF usando o parser local
+    try {
+      setProcessingMsg('Processando PDF localmente...');
+      extractedExpenses = await parseCreditCardPdf(file);
+    } catch (err: any) {
+      console.error('[Parser] Erro ao processar:', err);
+      setErrorMsg(err.message || 'Erro ao processar PDF.');
     }
 
     if (extractedExpenses.length > 0) {
@@ -128,7 +98,7 @@ export default function Home() {
     setProcessingMsg('');
     // Limpar input para permitir reenvio do mesmo arquivo
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [useGemini, errorMsg]);
+  }, [errorMsg]);
 
   // === MUDAR CATEGORIA ===
   const handleCategoryChange = useCallback((id: string, category: ExpenseCategory) => {
@@ -229,18 +199,11 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Toggle Gemini */}
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className={cn("w-10 h-5 rounded-full transition-colors relative",
-                  useGemini ? 'bg-primary' : 'bg-outline-variant')}
-                  onClick={() => setUseGemini(!useGemini)}>
-                  <div className={cn("absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow",
-                    useGemini ? 'translate-x-5' : 'translate-x-0.5')} />
-                </div>
-                <span className="font-data-mono text-xs text-outline group-hover:text-on-surface-variant transition-colors flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" /> IA Gemini {useGemini ? 'ativada' : 'desativada'}
-                </span>
-              </label>
+
+              {/* Indicador de processamento local */}
+              <span className="font-data-mono text-xs text-outline">
+                Processamento 100% local · seus dados nunca saem do navegador
+              </span>
             </div>
             <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileUpload} />
           </div>
