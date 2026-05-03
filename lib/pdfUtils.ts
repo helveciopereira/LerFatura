@@ -40,7 +40,6 @@ interface LimitesExtracao {
 
 // === CONSTANTES ===
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const LIMITE_COLUNA_X = 350;
 const REGEX_DATA = /^\d{2}\/\d{2}$/;
 const REGEX_VALOR = /^-?\s*\d{1,3}(?:\.\d{3})*,\d{2}$/;
@@ -109,7 +108,7 @@ export async function parseCreditCardPdf(file: File): Promise<Expense[]> {
 
   try {
     const pdfjsLib = await import('pdfjs-dist');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE_PATH}/pdf.worker.min.mjs`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -151,7 +150,7 @@ export async function extractPdfRawText(file: File): Promise<string> {
   if (typeof window === 'undefined') throw new Error('Não é possível processar PDF no servidor');
   try {
     const pdfjsLib = await import('pdfjs-dist');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE_PATH}/pdf.worker.min.mjs`;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const todosItens: PdfTextItem[] = [];

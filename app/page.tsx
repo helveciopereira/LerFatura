@@ -7,7 +7,7 @@
  */
 
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { FileUp, Terminal, Info, Trash2, BarChart3, Upload, Loader2, X } from 'lucide-react';
+import { FileUp, Terminal, Info, Trash2, BarChart3, Upload, Loader2, X, Sparkles } from 'lucide-react';
 import { parseCreditCardPdf, Expense, ExpenseCategory } from '@/lib/pdfUtils';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -42,6 +42,7 @@ export default function Home() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showLegend, setShowLegend] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // === CARREGAR DO LOCALSTORAGE ===
@@ -115,6 +116,44 @@ export default function Home() {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
+  // === CATEGORIZAR COM GEMINI (via API server-side) ===
+  const handleGeminiAnalyze = useCallback(async () => {
+    if (expenses.length === 0 || isAnalyzing) return;
+    setIsAnalyzing(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expenses: expenses.map(e => ({
+            id: e.id, date: e.date, description: e.description,
+            installment: e.installment, value: e.value,
+          })),
+          categories: {
+            H: { nome: 'Helvécio', descricao: 'Gastos pessoais do titular' },
+            A: { nome: 'Alice', descricao: 'Gastos pessoais da cônjuge' },
+            E: { nome: 'Empresa', descricao: 'Gastos empresariais, materiais de escritório, serviços profissionais' },
+            T: { nome: 'Terceiros', descricao: 'Gastos para outras pessoas, presentes, doações' },
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro na API');
+      if (data.categorizations) {
+        setExpenses(prev => prev.map(exp => {
+          const cat = data.categorizations.find((c: any) => c.id === exp.id);
+          return cat ? { ...exp, category: cat.category } : exp;
+        }));
+      }
+    } catch (err: any) {
+      console.error('[Gemini] Erro:', err);
+      setErrorMsg(err.message || 'Erro ao categorizar com IA.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [expenses, isAnalyzing]);
+
   // === DADOS CALCULADOS PARA RESUMO ===
   const summaryData = useMemo(() => {
     const totals: Record<string, number> = { H: 0, A: 0, E: 0, T: 0, none: 0 };
@@ -156,6 +195,13 @@ export default function Home() {
               className={cn("flex items-center gap-1.5 uppercase text-[11px] font-bold tracking-widest px-3 py-1.5 transition-all rounded",
                 view === 'summary' ? 'text-primary bg-primary/10' : 'text-outline hover:text-on-surface')}>
               <BarChart3 className="w-3.5 h-3.5" /> Resumo
+            </button>
+            {/* Botão Categorizar com IA */}
+            <button onClick={handleGeminiAnalyze} disabled={isAnalyzing}
+              className={cn("flex items-center gap-1.5 uppercase text-[11px] font-bold tracking-widest px-3 py-1.5 transition-all rounded",
+                isAnalyzing ? 'text-primary bg-primary/10 cursor-wait' : 'text-secondary hover:text-primary hover:bg-primary/10')}>
+              {isAnalyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {isAnalyzing ? 'Analisando...' : 'IA'}
             </button>
           </div>
         )}
